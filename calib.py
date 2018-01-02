@@ -47,17 +47,22 @@ def calculate_dist_mtx(obj_points, img_points, img_shape):
 def live_calibrate(conf_file, vid_cap, chessboard_size, scale):
     img_points = []
     while len(img_points) < 12:
-        img = cv2.read()
+        ret, img = vid_cap.read()
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         ret, corners = cv2.findChessboardCorners(gray, chessboard_size, None)
         if not ret:
+            img = cv2.drawChessboardCorners(img, chessboard_size, corners, ret)
+            cv2.imshow('img', img)
+            cv2.waitKey(1)
             continue
         corners = cv2.cornerSubPix(
             gray, corners, CORNER_SUBPIX_WINDOW_SIZE, (-1, -1),
             CORNER_SUBPIX_TERMINATION_CRITERIA)
         img_points.append(corners)
-        cv2.drawChessboardCorners(img, chessboard_size, corners, True)
+        img = cv2.drawChessboardCorners(img, chessboard_size, corners, True)
+        cv2.imshow('img', img)
         cv2.waitKey(500)
+    cv2.destroyAllWindows()
     obj_points = [_create_obj_grid(chessboard_size, scale)] * len(img_points)
     data = calculate_dist_mtx(obj_points, img_points, img.shape)
     dump_conf(conf_file, data)
